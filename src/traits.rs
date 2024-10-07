@@ -3,7 +3,7 @@ use eframe::emath::{Rect, Vec2};
 use eframe::epaint::{Color32, Rounding, Stroke};
 use egui::{Pos2, Response, Ui};
 use crate::node_graph:: NodeId;
-use crate::node::{ButtonState, NodeResponse, NodeState};
+use crate::node::{ButtonResponse, ButtonState, NodeResponse, NodeState};
 use crate::node_graph::{GraphResponse, GraphState};
 use crate::pan_zoom::PanZoom;
 
@@ -34,5 +34,7 @@ pub trait View {
         let response = ui.interact(rect, id, egui::Sense::click_and_drag());
         response
     }
-    fn draw_button(& mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, button_state:&mut ButtonState){}
+    fn draw_button(& mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, button_state:&mut ButtonState)->ButtonResponse{
+        ButtonResponse::None
+    }
 }

@@ -15,15 +15,25 @@ pub enum NodeState{
     Selected,
     UnSelected,
     Hover,
-
+    Invisible,
+    Visible
 }
+#[derive(Debug)]
 pub enum NodeResponse{
     AddNode(NodeId),
     DeleteNode(NodeId),
     Selected(NodeId),
     UnSelected(NodeId),
     EditNode(NodeId),
+    InvisibleNode(NodeId),
+    VisibleNode(NodeId),
     None,
+}
+#[derive(Debug,PartialEq)]
+pub enum ButtonResponse{
+    None,
+    FoldNode(NodeId),//father node
+    UnfoldNode(NodeId),//father node
 }
 #[derive(Debug)]
 pub struct Node{
@@ -33,7 +43,6 @@ pub struct Node{
     pub node_size:Vec2,
     pub node_color:Color32,
     pub node_text:String,
-  //  pub node_state: NodeState,
     pub father_id:Option<NodeId>,
     pub button_pos:Pos2,// 确定 展开按钮的位置
     //这里绘制矩形 用area不合适，应该ui 根据rect 大小分配一个 response?
@@ -166,9 +175,9 @@ impl View for Node {
 
         NodeResponse::None
     }
-    fn draw_button(& mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, button_state:&mut ButtonState)  {
+    fn draw_button(& mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, button_state:&mut ButtonState,)->ButtonResponse  {
         //这里每次绘制要用新的 transform pos 和size ，不能用 self 的pos 和size ，因为每次循环累计缩放和平移
-        let transformed_button_size = pan_zoom.transform.scaling * Vec2::new(5.0, 5.0);//5是半径
+        let transformed_button_size = pan_zoom.transform.scaling * Vec2::new(10.0, 10.0);//5是半径
         let transformed_node_size=pan_zoom.transform.scaling * self.node_size;
         let mut transformed_node_pos = pan_zoom.transform* self.node_pos;
         let transformed_button_pos = pan_zoom.transform* self.button_pos;
@@ -203,16 +212,19 @@ impl View for Node {
 
             let response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
             if response.clicked() {
-                *button_state = match button_state {
-                    ButtonState::UnFold =>   ButtonState::Fold,
-                    ButtonState::Fold =>  ButtonState::UnFold,
-                };
-                ui.ctx().request_repaint(); // 强制重绘UI
-               // println!("the button state is {:?}", button_state);
+                 match button_state {
+                    ButtonState::UnFold => { ui.ctx().request_repaint(); // 强制重绘UI
+                        ButtonResponse::FoldNode(self.node_id)} 
+                    ButtonState::Fold =>{ui.ctx().request_repaint();
+                    ButtonResponse::UnfoldNode(self.node_id)} 
+                }
+            }
+            else {
+                ButtonResponse::None
             }
     }
 }
-#[derive(Copy,Clone,Debug)]
+#[derive(Copy,Clone,Debug,PartialEq)]
 pub enum ButtonState{
    // Hove,
     Fold,

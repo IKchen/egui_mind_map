@@ -3,13 +3,14 @@ mod node;
 mod pan_zoom;
 mod node_graph;
 mod traits;
+mod handlers;
 
 use std::thread;
 use std::thread::spawn;
 use crate::pan_zoom::{PanZoom};
 use egui::{Align2, Id, Layout, menu, Order, Painter, Rounding, Sense, TextStyle, TopBottomPanel, Widget, Window, FontData, FontFamily};
 use egui::{Ui, Response, Vec2, pos2, Color32};
-
+use crate::handlers::*;
 /// 自定义按钮组件
 fn custom_button(ui: &mut Ui, text: &str) -> Response {
     let desired_size = Vec2::new(100.0, 30.0); // 按钮大小
@@ -196,9 +197,9 @@ impl App for MyApp {
                 false => {}
             }
 
-           let graph_response=self.node_graph.draw(ui,&mut self.pan_zoom,&mut self.graph_state);
-            self.graph_state.state_handle(graph_response);//处理response
-            self.node_graph.draw_curve_line(ui,&mut self.pan_zoom);
+            let graph_response=self.node_graph.draw(ui,&mut self.pan_zoom,&mut self.graph_state);
+            handle_graph_response(&mut self.node_graph,&mut self.graph_state,graph_response);//处理response
+
         });
         egui::TopBottomPanel::bottom("my_bottom_panel").show(ctx, |ui| {
           //  println!("bottomlayer  id is {:?}", ui.id());
@@ -229,6 +230,4 @@ fn set_font( ui:&mut Ui){
         .insert(0, "my_font".to_owned());
     ui.ctx().set_fonts(fonts);
 }
- fn handle_state( graph_state:&mut  GraphState, graph_response:  GraphResponse){
-    graph_state.state_handle(graph_response);
-}
+
