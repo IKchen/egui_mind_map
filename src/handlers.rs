@@ -75,8 +75,10 @@ fn handle_button_responses(
 ) -> Result<(), String> {
     for (node_id, response) in buttons_response {
         //根据 button 返回 button response的父级id 去查询 子级id的列表,并把所有子级 response 设为隐藏
+        
         match response {
             ButtonResponse::FoldNode(father_id) => {
+                println!("the button response is {:?}",father_id);
                 graph_state.graph_button_state[*father_id]=ButtonState::Fold;
                 
                 let children = node_graph.query_all_children_nodes(*father_id);
@@ -85,6 +87,7 @@ fn handle_button_responses(
                 }
             },
             ButtonResponse::UnfoldNode(father_id) => {
+                println!("the button response is {:?}",father_id);
                 graph_state.graph_button_state[*father_id]=ButtonState::UnFold;
                 let children = node_graph.query_all_children_nodes(*father_id);
                 for child_id in children {

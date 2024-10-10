@@ -146,8 +146,7 @@ impl NodeGraph{
 impl NodeGraphs for NodeGraph{
     fn draw(&mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, graph_state: &mut GraphState) -> GraphResponse {
         let mut graph_response = GraphResponse::default();
-        let mut nodes_to_remove = Vec::new();//要删除的节点
-        let mut nodes_to_add = Vec::new();//需要新增的节点
+     
       
         ui.ctx().set_debug_on_hover(true);//设置debug
    
@@ -167,33 +166,15 @@ impl NodeGraphs for NodeGraph{
             }
         }
 
-        // 在 retain 操作完成后，处理收集到的删除和新增操作
-        for id in nodes_to_remove {
-            graph_state.node_state.remove(id); // 删除节点状态
-            graph_state.graph_button_state.remove(id);// 删除节点状态
-        }
-
-        for id in nodes_to_add {
-            let new_node = self.add_node_with_father_node(id);
-            graph_state
-                .node_state
-                .insert_with_key(|mut k| {
-                k = new_node;
-                NodeState::UnSelected
-            }); // 插入新的节点状态
-            graph_state.graph_button_state.insert_with_key(|mut k| {
-                k = new_node;
-                ButtonState::UnFold
-            }); // 插入新的节点状态
-        }
-       // 收集有子节点的节点ID
+       
+        //收集有子节点的节点ID
        let nodes_have_children: Vec<NodeId> = self.nodes.values()
        .filter_map(|node| node.father_id)
        .collect::<std::collections::HashSet<_>>()
        .into_iter()
        .collect();
 
-   // 绘制展开按钮并收集响应
+        // 绘制展开按钮并收集响应
         for &id in &nodes_have_children {
         if let Some(node) = self.nodes.get_mut(id) {
         let button_response = node.draw_button(ui, pan_zoom, &mut graph_state.graph_button_state[id]);
@@ -203,7 +184,7 @@ impl NodeGraphs for NodeGraph{
             });
             }
         }
-   
+
         self.draw_curve_line(ui,pan_zoom,graph_state);
         graph_response
     }

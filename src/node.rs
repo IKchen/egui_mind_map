@@ -210,16 +210,21 @@ impl View for Node {
 
             }
 
-            let response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
-            if response.clicked() {
-                 match button_state {
-                    ButtonState::UnFold => { ui.ctx().request_repaint(); // 强制重绘UI
-                        ButtonResponse::FoldNode(self.node_id)} 
-                    ButtonState::Fold =>{ui.ctx().request_repaint();
-                    ButtonResponse::UnfoldNode(self.node_id)} 
-                }
+                    // 使用节点 ID 生成一个稳定的按钮 ID
+            let button_id = Id::new(self.node_id).with("button");
+
+            // 使用稳定的 ID 分配响应
+            let response = ui.interact(rect,button_id, egui::Sense::click());
+            if response.hovered() {
+                println!("Hovering over button of node {:?},response id is {:?}", self.node_id,response.id);
             }
-            else {
+            if response.clicked() {
+                
+                match button_state {
+                    ButtonState::UnFold => ButtonResponse::FoldNode(self.node_id),
+                    ButtonState::Fold => ButtonResponse::UnfoldNode(self.node_id),
+                }
+            } else {
                 ButtonResponse::None
             }
     }
