@@ -140,6 +140,36 @@ impl NodeGraph{
 
         nodes_all_children
     }
+    //判断节点是否应该绘制
+    fn should_draw_node(&self, node_id: NodeId, graph_state: &GraphState) -> bool {
+        let mut current_node_id = Some(node_id);//初始current_node_id   
+
+        while let Some(id) = current_node_id {
+            if let Some(node) = self.nodes.get(id) {
+
+                if graph_state.node_state.get(id) == Some(&NodeState::Invisible){
+                    //如果节点是不可见状态，则不绘制
+                    return false;
+                }
+
+                if let Some(father_id) = node.father_id {
+                    //如果有父节点 且是折叠状态，则不绘制
+                    if graph_state.graph_button_state.get(father_id) == Some(&ButtonState::Fold) {
+                        return false;
+                    }
+                    current_node_id = Some(father_id);//更新current_node_id
+                } else {
+                    //到达根节点，退出循环
+                    break;
+                }
+            } else {
+                //节点不存在，不应该发生
+                break;
+            }
+        }
+
+        true
+    }
 
 }
 
@@ -149,22 +179,24 @@ impl NodeGraphs for NodeGraph{
      
       
         ui.ctx().set_debug_on_hover(true);//设置debug
-   
-         // 绘制节点
-         for (node_id, node) in &mut self.nodes {
-            let should_draw = match node.father_id {
-                None => true,
-                Some(father_id) => graph_state.graph_button_state.get(father_id) == Some(&ButtonState::UnFold),
-            };
 
-            if should_draw {
-                let response = node.draw(ui, pan_zoom, &mut graph_state.node_state[node_id]);
-                graph_response.nodes_response.insert_with_key(|mut k| {
+         // 收集所有需要绘制的节点 ID
+         let nodes_to_draw: Vec<NodeId> = self.nodes.keys()
+         .filter(|&node_id| self.should_draw_node(node_id, graph_state))
+         .collect();
+
+        // 绘制节点
+        for node_id in nodes_to_draw {
+         if let Some(node) = self.nodes.get_mut(node_id) {
+             let response = node.draw(ui, pan_zoom, &mut graph_state.node_state[node_id]);
+             graph_response.nodes_response.insert_with_key(|mut k| {
                     k = node_id;
                     response
                 });
             }
         }
+   
+  
 
        
         //收集有子节点的节点ID
@@ -177,14 +209,15 @@ impl NodeGraphs for NodeGraph{
         // 绘制展开按钮并收集响应
         for &id in &nodes_have_children {
         if let Some(node) = self.nodes.get_mut(id) {
-        let button_response = node.draw_button(ui, pan_zoom, &mut graph_state.graph_button_state[id]);
-        graph_response.buttons_response.insert_with_key(|mut k| {
-            k = id;
-            button_response
-            });
+            if graph_state.node_state[id]!=NodeState::Invisible{
+            let button_response = node.draw_button(ui, pan_zoom, &mut graph_state.graph_button_state[id]);
+                graph_response.buttons_response.insert_with_key(|mut k| {
+                    k = id;
+                    button_response
+                    });
+                }
             }
         }
-
         self.draw_curve_line(ui,pan_zoom,graph_state);
         graph_response
     }
@@ -199,7 +232,6 @@ impl NodeGraphs for NodeGraph{
                 node_size: Vec2::new(100.0, 50.0),
                 node_text: String::from("text"),
                 node_color: Color32::from_rgb(150, 150, 250),
-              //  node_state: NodeState::UnSelected,
                 father_id: Some(father_node_id),
                 button_pos:node_pos+ Vec2::new(100.0, 0.0) / 2.0 + Vec2::new(10.0, 0.0)
             }
@@ -216,7 +248,6 @@ impl NodeGraphs for NodeGraph{
                     node_size: Vec2::new(100.0, 50.0),
                     node_text: String::from("text"),
                     node_color: Color32::from_rgb(150, 150, 250),
-                   // node_state: NodeState::UnSelected,
                     father_id: None,
                     button_pos:pos2+ Vec2::new(100.0, 0.0) / 2.0 + Vec2::new(10.0, 0.0)
                 }

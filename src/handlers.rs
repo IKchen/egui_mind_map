@@ -64,6 +64,7 @@ fn handle_node_responses(
     for id in nodes_to_remove {
         graph_state.node_state.remove(id); // 删除节点状态
         graph_state.graph_button_state.remove(id);// 删除节点按钮状态
+        node_graph.nodes.remove(id);//移除节点
     }
     Ok(())
 }
@@ -78,7 +79,7 @@ fn handle_button_responses(
         
         match response {
             ButtonResponse::FoldNode(father_id) => {
-                println!("the button response is {:?}",father_id);
+               // println!("the button response is {:?}",father_id);
                 graph_state.graph_button_state[*father_id]=ButtonState::Fold;
                 
                 let children = node_graph.query_all_children_nodes(*father_id);
@@ -87,7 +88,7 @@ fn handle_button_responses(
                 }
             },
             ButtonResponse::UnfoldNode(father_id) => {
-                println!("the button response is {:?}",father_id);
+              //  println!("the button response is {:?}",father_id);
                 graph_state.graph_button_state[*father_id]=ButtonState::UnFold;
                 let children = node_graph.query_all_children_nodes(*father_id);
                 for child_id in children {

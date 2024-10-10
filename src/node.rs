@@ -161,6 +161,9 @@ impl View for Node {
                         if ui.ctx().input(|x| {x.key_pressed(Key::Tab)}){
                             return  NodeResponse::AddNode(self.node_id)
                         }
+                        if ui.ctx().input(|x| {x.key_pressed(Key::Delete)}){
+                            return  NodeResponse::DeleteNode(self.node_id)
+                        }
                     }
                     NodeState::UnSelected => {
                         self.node_color = Color32::from_rgb(150, 150, 250);
@@ -215,9 +218,9 @@ impl View for Node {
 
             // 使用稳定的 ID 分配响应
             let response = ui.interact(rect,button_id, egui::Sense::click());
-            if response.hovered() {
-                println!("Hovering over button of node {:?},response id is {:?}", self.node_id,response.id);
-            }
+            // if response.hovered() {
+            //     println!("Hovering over button of node {:?},response id is {:?}", self.node_id,response.id);
+            // }
             if response.clicked() {
                 
                 match button_state {
