@@ -16,7 +16,7 @@ pub enum NodeState{
     UnSelected,
     Hover,
     Invisible,
-    Visible
+   // Visible  //这个状态有点多余
 }
 #[derive(Debug)]
 pub enum NodeResponse{
@@ -26,7 +26,7 @@ pub enum NodeResponse{
     UnSelected(NodeId),
     EditNode(NodeId),
     InvisibleNode(NodeId),
-    VisibleNode(NodeId),
+    VisibleNode(NodeId), 
     None,
 }
 #[derive(Debug,PartialEq)]
@@ -45,8 +45,6 @@ pub struct Node{
     pub node_text:String,
     pub father_id:Option<NodeId>,
     pub button_pos:Pos2,// 确定 展开按钮的位置
-    //这里绘制矩形 用area不合适，应该ui 根据rect 大小分配一个 response?
-  //  pub node_area: Area //用来绘制 node
 }
 impl Default for Node {
     fn default() -> Self {
@@ -98,85 +96,93 @@ impl View for Node {
 
         // 不绘制矩形，只绘制编辑框
         match node_state {
-            NodeState::Editing => {
-                // 编辑状态下，绘制编辑框
-                let mut text_zone_style = Style::default(); // 编辑框样式
-                text_zone_style.visuals.override_text_color = Some(egui::Color32::from_rgb(0, 255, 0)); // 字体颜色为绿色
-                text_zone_style.visuals.extreme_bg_color = egui::Color32::from_rgb(123, 123, 0); // 背景颜色
-
-                ui.set_style(text_zone_style);
-                //put 来设置 ui 绘制的位置和矩形大小
-                let text_response = ui.put(
-                        rect,
-                        egui::TextEdit::multiline(&mut self.node_text).desired_rows(1).desired_width(self.node_size.x - 10.0),
-                    );
-
-                // 当编辑框失去焦点时，退出编辑状态
-                return if text_response.lost_focus() {
-                    NodeResponse::UnSelected(self.node_id) // 返回对应响应
-                } else {
-                    NodeResponse::EditNode(self.node_id)
-                };
+            NodeState::Invisible => {
+                // 不可见状态，不做任何操作
+                return NodeResponse::None;
             }
-            _ => {
-                // 非编辑状态时绘制矩形和文本
-                let response = ui.allocate_rect(rect, Sense::click_and_drag());
-
-                if response.dragged() {
-                    let delta = response.drag_delta();
-                    transformed_pos += delta;
-                    self.node_pos += delta; // 同步更新节点位置
-                    self.button_pos+=delta;
-                }
-
-                ui.painter().rect_filled(rect, 5.0, self.node_color);
-
-                ui.painter().text(
-                    rect.center(),                     // 矩形的中心位置
-                    Align2::CENTER_CENTER,             // 文本对齐方式，设置为中心对齐
-                    &self.node_text,                   // 文本内容
-                    FontId::default(),                 // 使用默认字体
-                    Color32::BLACK,                    // 文本颜色
-                );
-
-                // 处理状态切换
+            _ =>{
                 match node_state {
-                    NodeState::Hover => {
-                        self.node_color = Color32::from_rgb(200, 150, 250);
-
-                        if response.double_clicked() {
-
-                            return NodeResponse::EditNode(self.node_id);
+                    NodeState::Editing => {
+                            // 编辑状态下，绘制编辑框
+                            let mut text_zone_style = Style::default(); // 编辑框样式
+                            text_zone_style.visuals.override_text_color = Some(egui::Color32::from_rgb(0, 255, 0)); // 字体颜色为绿色
+                            text_zone_style.visuals.extreme_bg_color = egui::Color32::from_rgb(123, 123, 0); // 背景颜色
+            
+                            ui.set_style(text_zone_style);
+                            //put 来设置 ui 绘制的位置和矩形大小
+                            let text_response = ui.put(
+                                    rect,
+                                    egui::TextEdit::multiline(&mut self.node_text).desired_rows(1).desired_width(self.node_size.x - 10.0),
+                                );
+            
+                            // 当编辑框失去焦点时，退出编辑状态
+                            return if text_response.lost_focus() {
+                                NodeResponse::UnSelected(self.node_id) // 返回对应响应
+                            } else {
+                                NodeResponse::EditNode(self.node_id)
+                            };
                         }
-
-                        if response.clicked() {
-                            return NodeResponse::Selected(self.node_id);
+                     _ => {
+                            // 非编辑状态时绘制矩形和文本
+                            let response = ui.allocate_rect(rect, Sense::click_and_drag());
+            
+                            if response.dragged() {
+                                let delta = response.drag_delta();
+                                transformed_pos += delta;
+                                self.node_pos += delta; // 同步更新节点位置
+                                self.button_pos+=delta;
+                            }
+            
+                            ui.painter().rect_filled(rect, 5.0, self.node_color);
+            
+                            ui.painter().text(
+                                rect.center(),                     // 矩形的中心位置
+                                Align2::CENTER_CENTER,             // 文本对齐方式，设置为中心对齐
+                                &self.node_text,                   // 文本内容
+                                FontId::default(),                 // 使用默认字体
+                                Color32::BLACK,                    // 文本颜色
+                            );
+        
+                             // 处理状态切换
+                            match node_state {
+                                NodeState::Hover => {
+                                    self.node_color = Color32::from_rgb(200, 150, 250);
+            
+                                    if response.double_clicked() {
+            
+                                        return NodeResponse::EditNode(self.node_id);
+                                    }
+            
+                                    if response.clicked() {
+                                        return NodeResponse::Selected(self.node_id);
+                                    }
+                                }
+                                NodeState::Selected => {
+                                    self.node_color = Color32::from_rgb(250, 0, 0);
+                                    if response.clicked() {
+                                        return NodeResponse::UnSelected(self.node_id);
+                                    }
+                                    if ui.ctx().input(|x| {x.key_pressed(Key::Tab)}){
+                                        return  NodeResponse::AddNode(self.node_id)
+                                    }
+                                    if ui.ctx().input(|x| {x.key_pressed(Key::Delete)}){
+                                        return  NodeResponse::DeleteNode(self.node_id)
+                                    }
+                                }
+                                NodeState::UnSelected => {
+                                    self.node_color = Color32::from_rgb(150, 150, 250);
+                                    if response.hovered() {
+                                        *node_state = NodeState::Hover;
+                                    }
+                                }
+                                _ => {}
+                            }
                         }
-                    }
-                    NodeState::Selected => {
-                        self.node_color = Color32::from_rgb(250, 0, 0);
-                        if response.clicked() {
-                            return NodeResponse::UnSelected(self.node_id);
-                        }
-                        if ui.ctx().input(|x| {x.key_pressed(Key::Tab)}){
-                            return  NodeResponse::AddNode(self.node_id)
-                        }
-                        if ui.ctx().input(|x| {x.key_pressed(Key::Delete)}){
-                            return  NodeResponse::DeleteNode(self.node_id)
-                        }
-                    }
-                    NodeState::UnSelected => {
-                        self.node_color = Color32::from_rgb(150, 150, 250);
-                        if response.hovered() {
-                            *node_state = NodeState::Hover;
-                        }
-                    }
-                    _ => {}
-                }
-            }
+                 }
+            }    
         }
-
         NodeResponse::None
+        
     }
     fn draw_button(& mut self, ui: &mut Ui, pan_zoom: &mut PanZoom, button_state:&mut ButtonState,)->ButtonResponse  {
         //这里每次绘制要用新的 transform pos 和size ，不能用 self 的pos 和size ，因为每次循环累计缩放和平移

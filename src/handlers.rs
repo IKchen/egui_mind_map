@@ -37,10 +37,12 @@ fn handle_node_responses(
                 graph_state.node_state[*id]=NodeState::Invisible;
             }
             NodeResponse::VisibleNode(id)=>{
-                graph_state.node_state[*id]=NodeState::Visible;
+                graph_state.node_state[*id]=NodeState::UnSelected;
             }
             NodeResponse::DeleteNode(id)=>{
-                nodes_to_remove.push(*id); // 收集要删除的节点
+                let children = node_graph.query_all_children_nodes(*id);
+                nodes_to_remove.extend(children); 
+                nodes_to_remove.push(*id); // 收集要删除的节点,删除时 要同时删除该节点下的 所有 子节点
             }
             _ => {}
         }
@@ -92,7 +94,7 @@ fn handle_button_responses(
                 graph_state.graph_button_state[*father_id]=ButtonState::UnFold;
                 let children = node_graph.query_all_children_nodes(*father_id);
                 for child_id in children {
-                    graph_state.node_state[child_id] = NodeState::Visible;
+                    graph_state.node_state[child_id] = NodeState::UnSelected;
                 }
             },
             ButtonResponse::None => {},

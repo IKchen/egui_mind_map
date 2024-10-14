@@ -60,7 +60,7 @@ impl PartialEq for NodeState {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (NodeState::Invisible, NodeState::Invisible) => true,
-            (NodeState::Visible, NodeState::Visible) => true,
+          //  (NodeState::Visible, NodeState::Visible) => true,
             (NodeState::Hover, NodeState::Hover) => true,
             (NodeState::Editing, NodeState::Editing) => true,
             (NodeState::Selected, NodeState::Selected) => true,
