@@ -10,7 +10,7 @@ use slotmap::SlotMap;
 use crate::node::{ButtonResponse, ButtonState, Node, NodeResponse, NodeState};
 use crate::pan_zoom::PanZoom;
 use crate::traits::{NodeGraphs, View};
-
+use std::collections::HashMap;
 
 slotmap::new_key_type! {
     pub struct NodeId;
@@ -196,8 +196,7 @@ impl NodeGraphs for NodeGraph{
             }
         }
    
-  
-
+    
        
         //收集有子节点的节点ID
        let nodes_have_children: Vec<NodeId> = self.nodes.values()
@@ -236,6 +235,7 @@ impl NodeGraphs for NodeGraph{
                 button_pos:node_pos+ Vec2::new(100.0, 0.0) / 2.0 + Vec2::new(10.0, 0.0)
             }
         });
+        layout_node_location(self); //新增节点时，重新布局所有节点位置，只有第一次新增节点时，需要重新布局
         nodeid
     }
     fn add_node_with_position(&mut self,pos2: Pos2)->NodeId {
@@ -267,4 +267,35 @@ impl NodeGraphs for NodeGraph{
 pub fn draw_bezier_line( stroke:Stroke,color:Color32,control_point:[Pos2; 4])->CubicBezierShape{
     let curve=CubicBezierShape::from_points_stroke(control_point,false,color,stroke);
     curve
+}
+//布局节点位置,这个实现还可以优化， 让一个根节点下，所有同级节点计算排序，而不是同一个父节点下排序
+pub fn layout_node_location(node_graph: &mut NodeGraph) {
+    let mut father_children_map: HashMap<NodeId, Vec<NodeId>> = HashMap::new();
+    
+    // 构建父节点到子节点的映射
+    for (node_id, node) in node_graph.nodes.iter() {
+        if let Some(father_id) = node.father_id {
+            father_children_map.entry(father_id).or_insert(Vec::new()).push(node_id);
+        }
+    }
+    
+    // 对每个父节点进行子节点布局
+    for (father_id, children) in father_children_map.iter() {
+        let father_pos = node_graph.nodes[*father_id].node_pos;
+        let child_count = children.len();
+        
+        if child_count > 0 {
+            let total_height = 100.0 * (child_count as f32 - 1.0); // 假设每个节点间隔300单位
+            let start_y = father_pos.y - total_height / 2.0;
+            
+            for (i, child_id) in children.iter().enumerate() {
+                let new_pos = Pos2::new(
+                    father_pos.x + 300.0, // 子节点在父节点右侧300单位
+                    start_y + 100.0 * i as f32
+                );
+                node_graph.nodes[*child_id].node_pos = new_pos;
+                node_graph.nodes[*child_id].button_pos = new_pos + Vec2::new(100.0, 0.0) / 2.0 + Vec2::new(10.0, 0.0);
+            }
+        }
+    }
 }

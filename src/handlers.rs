@@ -2,6 +2,7 @@ use crate::node_graph::{NodeGraph, GraphState, GraphResponse,NodeId};
 use crate::node::{NodeResponse, ButtonResponse,NodeState,ButtonState};
 use slotmap::SlotMap;
 use crate::traits::*;
+use crate::node_graph::layout_node_location;
 pub fn handle_graph_response(
     node_graph: &mut NodeGraph,
     graph_state: &mut GraphState,
@@ -61,13 +62,14 @@ fn handle_node_responses(
             ButtonState::UnFold
         }); // 插入新的节点 按钮状态
     }
-
-    //删除节点
-    for id in nodes_to_remove {
+      //删除节点,只有接收到 delete response 才需要删除并
+      for id in nodes_to_remove {
         graph_state.node_state.remove(id); // 删除节点状态
         graph_state.graph_button_state.remove(id);// 删除节点按钮状态
         node_graph.nodes.remove(id);//移除节点
     }
+    layout_node_location(node_graph);//删除节点后，重新布局所有节点位置，这里有问题，每次绘制都会重新布局
+   
     Ok(())
 }
 

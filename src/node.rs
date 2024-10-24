@@ -89,10 +89,8 @@ impl View for Node {
         //这里每次绘制要用新的 transform pos 和size ，不能用 self 的pos 和size ，因为每次循环累计缩放和平移
         let mut transformed_pos = pan_zoom.transform* self.node_pos;
         let transformed_size = pan_zoom.transform.scaling * self.node_size;
-        //self.node_pos=pan_zoom.transform* self.node_pos;
-
+     
         let rect = egui::Rect::from_center_size(transformed_pos, transformed_size);
-       // let node_area=Area::new(Id::new(self.node_id)).order(Order::Middle).default_pos(rect.min).default_size(transformed_size).movable(true);//这里要设置每个node area的 大小 和位置
 
         // 不绘制矩形，只绘制编辑框
         match node_state {
@@ -126,6 +124,7 @@ impl View for Node {
                             // 非编辑状态时绘制矩形和文本
                             let response = ui.allocate_rect(rect, Sense::click_and_drag());
             
+                            // 允许拖拽节点
                             if response.dragged() {
                                 let delta = response.drag_delta();
                                 transformed_pos += delta;
